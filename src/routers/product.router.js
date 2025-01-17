@@ -1,8 +1,5 @@
 import express from 'express'
-import { Router } from "express";
 import {prodManager} from '../managers/product.manager.js';
-import { json } from 'node:stream/consumers';
-import { stat } from 'node:fs';
 
 const router = express.Router()
 
@@ -11,7 +8,7 @@ const router = express.Router()
 router.get('/', async (req, res) => {
     try {
         const { limit } = req.query;
-        const products = await prodManager.getAll(); // Obtienes todos los productos
+        const products = await prodManager.getAllProducts(); // Obtienes todos los productos
 
         // Verifica si no hay productos
         if (products.length === 0) {
@@ -37,7 +34,7 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
     try{
         const {id} = req.params
-        const product = await prodManager.getById(id)
+        const product = await prodManager.getProductById(id)
         res.status(200).json(product)
     } catch (error){
         res.status(500).json({message: error.message})
@@ -67,6 +64,12 @@ router.post('/', async (req, res) => {
             return res.status(400).json({ message: 'El stock debe ser un número mayor a cero' });
         }
 
+        // Validación unica de code
+        const existingProduct = await prodManager.getProductByCode(code);
+        if (existingProduct) {
+            return res.status(400).json({ message: `El código '${code}' ya está en uso. Por favor, usa un código único.` });
+        }
+
         // Si todo está correcto, se agrega el producto
         const addProduct = await prodManager.createProduct({
             title,
@@ -88,7 +91,7 @@ router.post('/', async (req, res) => {
     router.delete('/:id', async (req, res) => {
         try{
             const {id} = req.params
-            const product = await prodManager.delete(id)
+            const product = await prodManager.deleteProduct(id)
             res.status(200).json({message: `El producto ${product.title} fue eliminado con exito`})
         } catch (error){
             res.status(500).json({message: error.message})
@@ -99,6 +102,8 @@ router.post('/', async (req, res) => {
     router.put('/:id', async (req, res) => {
         try{
             const {id} = req.params
+            const prodUpdate = await prodManager.updateProduct(req.body, id)
+            res.status(200).json(prodUpdate)
         } catch (error){
             res.status(500).json({message: error.message})
         }

@@ -1,10 +1,7 @@
 import fs from "node:fs";
 import { v4 as uuidv4 } from "uuid";
 import path from 'path'
-import { json } from "node:stream/consumers";
-import { promises } from "node:dns";
 import { prodManager } from "./product.manager.js";
-import { error } from "node:console";
 
 class CartManager {
     constructor(path) {
@@ -28,7 +25,6 @@ class CartManager {
 
 
     async createCart(){
-        try{
             const cart = {
                 id : uuidv4(),
                 products : []
@@ -38,33 +34,23 @@ class CartManager {
             cartsFile.push(cart)
             await fs.promises.writeFile(this.path, JSON.stringify(cartsFile))
             return cart
-
-        } catch (error) {
-            throw new Error(error)
-        }
     }
 
 
     async getCartById(id){
-        try{
             const carts = await this.getAllCarts();
             return carts.find((cart) => cart.id === id);
-        } catch (error){
-            throw new Error(error.message)
-        }
     }
 
 
     async saveProductToCart(idCart, idProd){
-        try{
-            const prodExists = await prodManager.getById(idProd)
+            const prodExists = await prodManager.getCartById(idProd)
             if (!prodExists){
                 throw new Error ('Product not exists')
             }
 
             let cartsFile = await this.getAllCarts();
-
-            const cartExists = await cartManager.getById(idCart)
+            const cartExists = await this.getCartById(idCart)
             if (!cartExists){
                 throw new Error ('Cart not exists')
             }
@@ -89,10 +75,6 @@ class CartManager {
 
             await fs.promises.writeFile(this.path, JSON.stringify(updatedCarts))
             return cartExists
-
-        } catch (error) {
-            throw new Error (error)
-        }
     }
 
 

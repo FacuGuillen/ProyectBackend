@@ -1,15 +1,13 @@
 import fs from "node:fs";
 import { v4 as uuidv4 } from "uuid";
 import path from 'path'
-import { json } from "node:stream/consumers";
-import { promises } from "node:dns";
 
 class ProductManager {
     constructor(path) {
     this.path = path;
 }
 
-    async getAll(){
+    async getAllProducts(){
         try{
             if(fs.existsSync(this.path)){
                 const products = await fs.promises.readFile(this.path, "utf-8")
@@ -21,9 +19,23 @@ class ProductManager {
     }
 
 
-    async getById(id){
+    async updateProduct(obj, id){
+        const products = await this.getAllProducts()
+        const product = await this.getProductById(id)
+
+        prod = {...prod, ...obj}
+
+        const newArray = products.filter((prod) => {prod.id !== id})
+        newArray.push(prod)
+        await fs.promises.writeFile(this.path, JSON.stringify(newArray));
+        return prod;
+        
+    }
+
+
+    async getProductById(id){
         try{
-            const allProducts = await this.getAll()
+            const allProducts = await this.getAllProducts()
             const product = allProducts.find((product) => product.id === id)
             if(!product) {
                 throw new Error('Product not found')
@@ -41,7 +53,7 @@ class ProductManager {
                 id: uuidv4(),
                 ...obj
             }
-            const products = await this.getAll()
+            const products = await this.getAllProducts()
             products.push(product)
             await fs.promises.writeFile(this.path, JSON.stringify(products))
             return product
@@ -51,10 +63,10 @@ class ProductManager {
     }
 
 
-    async delete(id){
+    async deleteProduct(id){
         try{
-            const prod = await this.getById(id)
-            const products = await this.getAll()
+            const prod = await this.getProductById(id)
+            const products = await this.getAllProducts()
             const newArray = products.filter((prod) => prod.id !== id)
             await fs.promises.writeFile(this.path, JSON.stringify(newArray))
             return prod

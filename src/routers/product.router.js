@@ -5,26 +5,88 @@ const router = express.Router()
 
 
 
+
+// router.get('/', async (req, res) => {
+//     try {
+//         // Obtener los parámetros de la query: 'limit' y 'page'
+//         const { limit = 10, page = 1 } = req.query;
+
+//         // Convierte limit y page a números, ya que vienen como cadenas de texto
+//         const limitNumber = parseInt(limit, 10);
+//         const pageNumber = parseInt(page, 10);
+
+//         console.log(`Valores que da en ${limitNumber} ${pageNumber}`);
+        
+        
+
+//         // Llamar al método 'getAllProducts' pasando los parámetros de paginación
+//         const result = await prodManager.getAllProducts({ limit: limitNumber, page: pageNumber });
+
+//         // Verificar si no hay productos
+//         if (result.docs.length === 0) {
+//             return res.status(404).json({ message: "No se encontró ningún producto" });
+//         }
+
+//         // Preparar la respuesta
+//         const response = {
+//             docs: result.docs, // Los productos obtenidos
+//             totalDocs: result.totalDocs, // Total de documentos
+//             limit: result.limit, // Límite de productos por página
+//             page: result.page, // Página actual
+//             totalPages: result.totalPages, // Total de páginas
+//             hasNextPage: result.hasNextPage, // Si hay siguiente página
+//             hasPrevPage: result.hasPrevPage, // Si hay página anterior
+//             prev: `$page=${result.prevPage}`,
+//             next: `$page=${result.nextPage}`
+//         };
+
+//         // Devolver la respuesta con los productos paginados
+//         res.status(200).json(response);
+//     } catch (error) {
+//         // Si hay un error, lo manejamos
+//         res.status(500).json({ message: error.message });
+//     }
+// })
+
+
+
 router.get('/', async (req, res) => {
     try {
-        const { limit } = req.query;
-        const products = await prodManager.getAllProducts(); // Obtienes todos los productos
+        const { limit = 10, page = 1, sort } = req.query;
 
-        // Verifica si no hay productos
-        if (products.length === 0) {
-            return res.status(404).json({ message: "No se encontró ningún producto" });
+        // Convertimos limit y page a números
+        const limitNumber = parseInt(limit, 10);
+        const pageNumber = parseInt(page, 10);
+
+        // Validar el valor de sort (debe ser 'asc' o 'desc')
+        const validSort = sort === 'asc' || sort === 'desc' ? sort : undefined;
+
+        // Llamar al método getAllProducts con los parámetros
+        const result = await prodManager.getAllProducts({
+            limit: limitNumber,
+            page: pageNumber,
+            sort: validSort,
+        });
+
+        if (result.docs.length === 0) {
+            return res.status(404).json({ message: 'No se encontró ningún producto' });
         }
 
-        // Si existe 'limit', devolvemos solo esa cantidad de productos
-        if (limit) {
-            const limitedProducts = products.slice(0, parseInt(limit)); // Limitamos el array
-            return res.status(200).json(limitedProducts);
-        }
+        // Preparar la respuesta
+        const response = {
+            docs: result.docs,
+            totalDocs: result.totalDocs,
+            limit: result.limit,
+            page: result.page,
+            totalPages: result.totalPages,
+            hasNextPage: result.hasNextPage,
+            hasPrevPage: result.hasPrevPage,
+            prev: result.hasPrevPage ? `$page=${result.prevPage}` : null,
+            next: result.hasNextPage ? `$page=${result.nextPage}` : null,
+        };
 
-        // Si no hay 'limit', devolvemos todos los productos
-        res.status(200).json(products);
+        res.status(200).json(response);
     } catch (error) {
-        // Si hay otro tipo de error, lo manejamos
         res.status(500).json({ message: error.message });
     }
 });
@@ -64,11 +126,7 @@ router.post('/', async (req, res) => {
             return res.status(400).json({ message: 'El stock debe ser un número mayor a cero' });
         }
 
-        // Validación unica de code
-        const existingProduct = await prodManager.getProductByCode(code);
-        if (existingProduct) {
-            return res.status(400).json({ message: `El código '${code}' ya está en uso. Por favor, usa un código único.` });
-        }
+
 
         // Si todo está correcto, se agrega el producto
         const addProduct = await prodManager.createProduct({
@@ -83,6 +141,8 @@ router.post('/', async (req, res) => {
 
         res.status(201).json(addProduct);
     } catch (error) {
+
+
         res.status(500).json({ message: error.message });
     }
 });
@@ -90,8 +150,8 @@ router.post('/', async (req, res) => {
 
     router.delete('/:id', async (req, res) => {
         try{
-            const {id} = req.params
-            const product = await prodManager.deleteProduct(id)
+            const {code} = req.params
+            const product = await prodManager.deleteProduct(code)
             res.status(200).json({message: `El producto ${product.title} fue eliminado con exito`})
         } catch (error){
             res.status(500).json({message: error.message})

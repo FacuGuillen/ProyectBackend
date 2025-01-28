@@ -13,6 +13,7 @@ socket.on('realTime', (data) => {
                 <td>${product.description}</td>
                 <td>${product.category}</td>
                 <td>${product.stock}</td>
+                <td>${product.price}</td>
             </tr>
         `;
         contenedorProductosRTP.innerHTML += row;
@@ -42,6 +43,16 @@ document.querySelector('#btn-delete-product').addEventListener('click', () => {
     const id = document.querySelector('#delete-id').value
     deleteProduct(id)
 })
+
+document.querySelector('#order-product').addEventListener('change', (event) => {
+    const option = event.target.value;
+
+    if (option == "1") {  // Ordenar por mayor precio
+        socket.emit("order-products", { order: "desc" });
+    } else if (option == "2") {  // Ordenar por menor precio
+        socket.emit("order-products", { order: "asc" });
+    }
+});
 
 const deleteProduct = (id) => {
     socket.emit('delete-product', id)

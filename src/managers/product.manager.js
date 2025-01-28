@@ -1,77 +1,85 @@
-import fs from "node:fs";
-import { v4 as uuidv4 } from "uuid";
 import path from 'path'
+import { ProductsModels } from '../models/products.model.js'
 
 class ProductManager {
     constructor(path) {
     this.path = path;
 }
 
-    async getAllProducts(){
-        try{
-            if(fs.existsSync(this.path)){
-                const products = await fs.promises.readFile(this.path, "utf-8")
-                return JSON.parse(products)
-            } else return []
-        } catch (error){
-            throw new Error(error.message)
+
+
+    async getAllProducts({ limit = 10, page = 1, sort }) {
+        try {
+            // Crear un objeto de opciones de consulta
+            const options = { limit, page };
+    
+            // Si se recibe sort, agregar el ordenamiento
+            if (sort === 'asc') {
+                options.sort = { price: 1 }; // Orden ascendente por precio
+            } else if (sort === 'desc') {
+                options.sort = { price: -1 }; // Orden descendente por precio
+            }
+    
+            const result = await ProductsModels.paginate({}, options);
+    
+            return result;
+        } catch (error) {
+            throw new Error(error.message);
         }
     }
-
-
-    async updateProduct(obj, id){
-        const products = await this.getAllProducts()
-        const product = await this.getProductById(id)
-
-        prod = {...prod, ...obj}
-
-        const newArray = products.filter((prod) => {prod.id !== id})
-        newArray.push(prod)
-        await fs.promises.writeFile(this.path, JSON.stringify(newArray));
-        return prod;
-        
-    }
+    
 
 
     async getProductById(id){
         try{
-            const allProducts = await this.getAllProducts()
-            const product = allProducts.find((product) => product.id === id)
-            if(!product) {
+            const product = await ProductsModels.findById(id)
+            if(!product){
                 throw new Error('Product not found')
             }
             return product
-        } catch (error){
+        } catch (e) {
             throw new Error(error.message)
         }
     }
 
 
-    async createProduct(obj){
+    async updateProduct(obj, id) {
         try {
-            const product = {
-                id: uuidv4(),
-                ...obj
+            const updatedProduct = await ProductsModels.findByIdAndUpdate(
+                id,
+                obj,
+                { new: true } // `new: true` devuelve el producto actualizado
+            );
+            if (!updatedProduct) {
+                throw new Error('Product not found');
             }
-            const products = await this.getAllProducts()
-            products.push(product)
-            await fs.promises.writeFile(this.path, JSON.stringify(products))
-            return product
-        } catch (error){
-            throw new Error(error.message)
+            return updatedProduct;
+        } catch (error) {
+            throw new Error(error.message);
         }
     }
 
 
-    async deleteProduct(id){
-        try{
-            const prod = await this.getProductById(id)
-            const products = await this.getAllProducts()
-            const newArray = products.filter((prod) => prod.id !== id)
-            await fs.promises.writeFile(this.path, JSON.stringify(newArray))
-            return prod
-        } catch (error){
-            throw new Error(error)
+    async createProduct(obj) {
+        try {
+            const product = new ProductsModels(obj); // Crea una instancia del modelo
+            await product.save(); // Guarda el producto en la base de datos
+            return product;
+        } catch (error) {
+            throw new Error(error.message);
+        }
+    }
+
+
+    async deleteProduct(code) {
+        try {
+            const deletedProduct = await ProductsModels.findOneAndDelete({ code });
+            if (!deletedProduct) {
+                throw new Error('Product not found');
+            }
+            return deletedProduct;
+        } catch (error) {
+            throw new Error(error.message);
         }
     }
 

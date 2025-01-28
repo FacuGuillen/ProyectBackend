@@ -1,50 +1,3 @@
-// import express from 'express'
-// import {cartManager} from '../managers/cart.manager.js';
-
-
-
-// const router = express.Router()
-
-
-// router.post('/', async (req, res) => {
-//     try{
-//         res.json(await cartManager.createCart())
-//     } catch (error) {
-//         res.status(500).json({message: error.message})
-//     }
-// })
-
-
-// router.get('/:cid', async (req, res) => {
-//     try{
-//         const {cid} = req.params
-//         const carrito = await cartManager.getCartById(cid)
-//         res.status(200).json(carrito)
-//     } catch (error) {
-//         res.status(500).json({message: error.message})
-//     }
-// })
-
-
-// router.post('/:idCart/product/:idProd', async (req, res) => {
-//     try{
-//         const {idProd} = req.params
-//         const {idCart} = req.params
-//         const response = await cartManager.saveProductToCart(idCart, idProd)
-//         res.json(response)
-//     } catch (error) {
-//         res.status(500).json({message: error.message})
-//     }
-// })
-
-// router.delete('/:cid/products/:pid', async (req, res) => {
-
-// })
-
-
-// export default router;
-
-
 import express from 'express';
 import { cartManager } from '../managers/cart.manager.js';
 import { CartsModels } from '../models/cart.model.js';
@@ -62,10 +15,27 @@ router.post('/', async (req, res) => {
 });
 
 
+// router.get('/:idCart', async (req, res) => {
+//     try {
+//         const { idCart } = req.params;
+//         const cart = await cartManager.getCartById(idCart);
+//         res.status(200).json(cart);
+//     } catch (error) {
+//         res.status(500).json({ message: error.message });
+//     }
+// });
+
 router.get('/:idCart', async (req, res) => {
     try {
         const { idCart } = req.params;
-        const cart = await cartManager.getCartById(idCart);
+
+        // Buscar el carrito por ID y popular los productos
+        const cart = await CartsModels.findById(idCart).populate('products.product');
+
+        if (!cart) {
+            return res.status(404).json({ message: 'Cart not found' });
+        }
+
         res.status(200).json(cart);
     } catch (error) {
         res.status(500).json({ message: error.message });

@@ -3,53 +3,6 @@ import {prodManager} from '../managers/product.manager.js';
 
 const router = express.Router()
 
-
-
-
-// router.get('/', async (req, res) => {
-//     try {
-//         // Obtener los parámetros de la query: 'limit' y 'page'
-//         const { limit = 10, page = 1 } = req.query;
-
-//         // Convierte limit y page a números, ya que vienen como cadenas de texto
-//         const limitNumber = parseInt(limit, 10);
-//         const pageNumber = parseInt(page, 10);
-
-//         console.log(`Valores que da en ${limitNumber} ${pageNumber}`);
-        
-        
-
-//         // Llamar al método 'getAllProducts' pasando los parámetros de paginación
-//         const result = await prodManager.getAllProducts({ limit: limitNumber, page: pageNumber });
-
-//         // Verificar si no hay productos
-//         if (result.docs.length === 0) {
-//             return res.status(404).json({ message: "No se encontró ningún producto" });
-//         }
-
-//         // Preparar la respuesta
-//         const response = {
-//             docs: result.docs, // Los productos obtenidos
-//             totalDocs: result.totalDocs, // Total de documentos
-//             limit: result.limit, // Límite de productos por página
-//             page: result.page, // Página actual
-//             totalPages: result.totalPages, // Total de páginas
-//             hasNextPage: result.hasNextPage, // Si hay siguiente página
-//             hasPrevPage: result.hasPrevPage, // Si hay página anterior
-//             prev: `$page=${result.prevPage}`,
-//             next: `$page=${result.nextPage}`
-//         };
-
-//         // Devolver la respuesta con los productos paginados
-//         res.status(200).json(response);
-//     } catch (error) {
-//         // Si hay un error, lo manejamos
-//         res.status(500).json({ message: error.message });
-//     }
-// })
-
-
-
 router.get('/', async (req, res) => {
     try {
         const { limit = 10, page = 1, sort } = req.query;
